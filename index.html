@@ -32,7 +32,7 @@
 
 		<br>
 
-		Link to webpage: (TODO) <a href="https://cs184.eecs.berkeley.edu/fa26">cs184.eecs.berkeley.edu/fa26</a>
+		Link to webpage: <a href="https://cal-cs184-student.github.io/hw1-erica-hw1-writeup/">Website</a>
 		
 		<br>
 
@@ -48,7 +48,7 @@
 		-->
 
 		<h2>Overview</h2>
-		Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.
+		This homework was very insightful to produce concrete implementations of the concepts we discussed during class. In particular, I learned a lot about the similarities and differences between the three sampling methods we observed: pixel sampling, level sampling, and increasing the number of samples. I found it interesting to try different combinations of these as well and see what is more and less effective at anti-aliasing.
 
 		<h2>Task 1: Drawing Single-Color Triangles</h2>
 		To rasterize triangles, I first find the bounding box for the triangle by finding the minimum and maximum x- and y-coordinates the triangle requires. Then, I iterate through the centers of all pixels in this bounding box while using the point-in-triangle to check for if the points are inside all three lines of the triangle. I check if these edge values are all-positive or all-negative to account for both winding orders of the vertices. Since I only check through the viable x- and y-coordinates of the bounding box, my algorithm is no worse than checking each sample within the triangle’s bounding box.
@@ -57,13 +57,11 @@
 			<img src="assets/p1.png" alt="p1" style="width:100%"/>
 			<figcaption>Here is an image with the polygons filled in. We can see the jagged edges when zoomed in from the point-in-triangle process without any supersampling or anti-aliasing.</figcaption>
 		</figure>
-
-		<p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b> is a column in that row. You might find this useful for framing and showing your result images in an organized fashion.</p>
 		
 		<h2>Task 2: Antialiasing by Supersampling</h2>
 		
 		I implemented supersampling by dividing each pixel into a sqrt(sample rate) * sqrt(sample rate) grid. For each subpixel, I determined if its center was within the triangle. Supersampling is useful because each pixel's color is no longer dependent on just one pixel center where each pixel is either inside or outside the triangle. Instead, each pixel is assigned the <b>average of its subpixels' colors</b>, which reduces the jaggedness of edges produced through naive sampling. 
-        I modified the rasterization pipeline to draw into the <b>sample_buffer data structure (vector of colors)</b> instead of directly writing to the framebuffer. This is because I implemented a function to average the subpixels of each pixel and write the resulting color to the framebuffer.  
+        I modified the rasterization pipeline to draw into the <b>sample_buffer data structure (vector of colors)</b> instead of directly writing to the framebuffer. This is because I implemented a function to average the subpixels of each pixel and write the resulting color to the framebuffer. Each pixel therefore has the sample rate number of color entries, which are averaged during the resolution step. 
         
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 90%; text-align: center;  border-collapse: collapse;">
@@ -107,7 +105,7 @@
 		<br><br>
 		For <b>nearest sampling</b>, I used the texel closest to the texture coordinate. While this may be more efficient, texture samples only come from one texel, so transitions may appear more sharp/jagged.
 		<br>
-		For <b>bilinear sampling</b>, I found the four texels surrouding the given texture coordinate and interpolated their colors based on its position. Because this obtains colors through an average of the surrounding texels, this produced smoother transitions and less blockiness as a whole.
+		For <b>bilinear sampling</b>, I found the four texels surrounding the given texture coordinate and interpolated their colors based on its position. Because this obtains colors through a weighted average of the surrounding texels, this produced smoother transitions and less blockiness as a whole.
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 			  <tr>
@@ -138,7 +136,7 @@
 		<h2>Task 6: "Level Sampling" with mipmaps for texture mapping</h2>
 
 		Level sampling deals with mipmap levels; this allows us to control the resolution of the texture that should be used when sampling a texture. Mipmaps contain <b>progressively lower-resolution versions of the original texture</b> and may be used when a texture occupies a small amount of space. 
-		To implement level sampling, I used the derivatives of the barycentric coordinates to determine how quickly texture coordinates change across the image. If this differential is larger, this means that lots of texture is covered and we want to use a higher mipmap level (lower-resolution) in order to prevent aliasing. On the other hand, if the texture does not change much, this means that more texture detailed is needed, leading us to use a lower mipmap level (higher-resolution).
+		To implement level sampling, I used the derivatives of the barycentric coordinates to determine how quickly texture coordinates change across the image. If this differential is larger, this means that a single pixel corresponds to lots of texture, so the full-resolution version of the texture would have too much detail to be able to be represented by the pixel. In this case, we want to use a higher mipmap level (lower-resolution) in order to prevent aliasing. On the other hand, if the texture does not change much, this means that more texture details are needed, leading us to use a lower mipmap level (higher-resolution).
 		<br><br>
 		I implemented three level sampling methods:
 		<br>
@@ -168,18 +166,18 @@
 				</td>
 				<td style="text-align: center;">
 				  <img src="assets/p6_nearest_linear.png" style="border: 1px solid black" width="500px"/>
-				  <figcaption><b>L_NEAREST + P_LINEAR</b>: We observe our best result here. When comparing to the L_ZERO example, we can see smoother transitions and fewer standout colors. Overall, there is nearly no aliasing because of the use of nearest mipmap sampling combined with bilinear pixel sampling.</figcaption>
+				  <figcaption><b>L_NEAREST + P_LINEAR</b>: We observe our best result here. When comparing to the L_ZERO example, we can see smoother transitions and fewer standout colors. Overall, aliasing is significantly decreased because of the use of nearest mipmap sampling combined with bilinear pixel sampling.</figcaption>
 				</td>
 			  </tr>
 			</table>
 		</div>
 		<br><br>
 		<h2><b>Overall sampling comparison </b></h2>
-		<b>Pixel sampling: </b>Adjusting pixel sampling has a large amount of antialiasing power. Within pixel sampling, nearest sampling is fastest because it only requires one texel's information, but may produce jagged artifacts in areas of high-frequency details and rapid color changes. On the other hand, bilinear sampling is slower because it uses four neighboring texels and interpolates, but produces considerably smoother transitions.
+		<b>Pixel sampling: </b>Adjusting pixel sampling is effective to control texture smoothness. Within pixel sampling, nearest sampling is fastest because it only requires one texel's information, but may produce jagged artifacts in areas of high-frequency details and rapid color changes. On the other hand, bilinear sampling is slower because it uses four neighboring texels and interpolates, but produces considerably smoother transitions.
 		<br>
-		<b>Level sampling: </b>Level sampling also has large antialiasing power, especially when used in conjunction with pixel sampling. However, using mipmaps requires extra memory requirements because multiple mipmap levels (reduced-resolution copies) must be stored in memory. However, using higher mipmap levels (lower-resolution) may increase efficiency by reducing the amount of high-resolution texture data accessed. Within level sampling, linear level sampling is more expensive because two mipmap levels are accessed to interpolate instead of just one in nearest-level sampling, although results may be better/smoother from interpolation.
+		<b>Level sampling: </b>Level sampling has large antialiasing power because it selects a texture resolution appropriate to the texture landscape of the area corresponding to a screen pixel. However, using mipmaps requires extra memory requirements because multiple mipmap levels (reduced-resolution copies) must be stored in memory. However, using higher mipmap levels (lower-resolution) may increase efficiency by reducing the amount of high-resolution texture data accessed. Within level sampling, linear level sampling is more expensive because two mipmap levels are accessed to interpolate instead of just one in nearest-level sampling, although results may be better/smoother from interpolation.
 		<br>
-		<b>Number of samples: </b> Changing the number of samples per pixel improves antialising locally by averaging the colors of more nearby pixels. Increasing the number of samples per pixel dramatically improves smoothness, but requires more computational power because more lookups must occur to obtain information about a pixel's neighbors and average them.
+		<b>Number of samples: </b> Changing the number of samples per pixel improves antialiasing on the screen by averaging the colors of more nearby pixels. Increasing the number of samples per pixel dramatically improves smoothness, but requires more computational power because more lookups must occur to obtain information about a pixel's neighbors and average them.
 	</div>
 	</body>
 </html>
